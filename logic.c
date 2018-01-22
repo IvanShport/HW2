@@ -163,12 +163,7 @@ int isvalid(char* name);  // Проверка на совпадение c or, an
 int isrepit(Vector* vec_of_name ,char* name);  // Проверка на повторение имен
 int calc(Vector* names_and_values, char* str);  // Вычиление выражения
 int search_const_name(char* str, const char* const_str);
-/*int search_and(char* str, size_t i);
-int search_not(char* str, size_t i);
-int search_xor(char* str, size_t i);
-int search_or(char* str, size_t i);*/
 int search_true(char* str, size_t i);
-//int search_false(char* str, size_t i);
 int set_operator(Stack* operators, char op, Stack* operands); // Добавление операторов в стек
 int get_priority(char symbol);  // Приоритеты операций
 int calculate(Stack* operands, char op);  // Вычиление операндов в зависимости от оператора
@@ -314,10 +309,10 @@ int init(Vector* names_and_values, char* str){
 }
 
 int isvalid(char* name){
-    if(strcmp(name, "and") == 0 ||
-       strcmp(name, "or") == 0 ||
-       strcmp(name, "xor") == 0 ||
-       strcmp(name, "not") == 0){
+    if(strcmp(name, __and) == 0 ||
+       strcmp(name, __or) == 0 ||
+       strcmp(name, __xor) == 0 ||
+       strcmp(name, __not) == 0){
         return 0;
     }
     return 1;
@@ -524,50 +519,6 @@ int search_const_name(char* str, const char* const_str){
     return 0;
 }
 
-/*int search_not(char* str, size_t i){
-    return (i + 2 <= strlen(str) &&   // Поиск оператора not
-            str[i] == 'n' &&
-            (i == 0 ||
-             isspace(str[i - 1]) ||
-             str[i - 1] == ')' ||
-             str[i - 1] == '(') &&
-            str[i + 1] == 'o' &&
-            str[i + 2] == 't' &&
-            (!str[i + 3] ||
-             isspace(str[i + 3]) ||
-             str[i + 3] == '(' ||
-             str[i + 3] == ')'));
-}
-
-int search_xor(char* str, size_t i){
-    return (i + 2 <= strlen(str) &&   // Поиск оператора xor
-            str[i] == 'x' &&
-            (i == 0 ||
-             isspace(str[i - 1]) ||
-             str[i - 1] == ')' ||
-             str[i - 1] == '(') &&
-            str[i + 1] == 'o' &&
-            str[i + 2] == 'r' &&
-            (!str[i + 3] ||
-             isspace(str[i + 3]) ||
-             str[i + 3] == '(' ||
-             str[i + 3] == ')'));
-}
-
-int search_or(char* str, size_t i){
-    return (i + 1 <= strlen(str) &&    // Поиск оператора or
-            str[i] == 'o' &&
-            (i == 0 ||
-             isspace(str[i - 1]) ||
-             str[i - 1] == ')' ||
-             str[i - 1] == '(') &&
-            str[i + 1] == 'r' &&
-            (!str[i + 2] ||
-             isspace(str[i + 2]) ||
-             str[i + 2] == '(' ||
-             str[i + 2] == ')'));
-}*/
-
 int search_true(char* str, size_t i){
     return (i + 3 <= strlen(str) &&   // Поиск значения True
             str[i] == 'T' &&
@@ -581,21 +532,6 @@ int search_true(char* str, size_t i){
              isspace(str[i + 4]) ||
              ispunct(str[i + 4])));
 }
-/*
-int search_false(char* str, size_t i){
-    return (i + 4 <= strlen(str) &&   // Поиск значения False
-            str[i] == 'F' &&
-            (i == 0 ||
-             isspace(str[i - 1]) ||
-             ispunct(str[i - 1])) &&
-            str[i + 1] == 'a' &&
-            str[i + 2] == 'l' &&
-            str[i + 3] == 's' &&
-            str[i + 4] == 'e' &&
-            (!str[i + 5] ||
-             isspace(str[i + 5]) ||
-             ispunct(str[i + 5])));
-}*/
 
 int set_operator(Stack* operators, char op, Stack* operands){
     if(op == '(' ||
