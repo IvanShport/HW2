@@ -8,6 +8,13 @@
 #define START_MAX_SIZE_FOR_STACK 4
 #define START_SIZE_FOR_STRING 32
 
+const char* __true = "True";
+const char* __false = "False";
+const char* __and = "and";
+const char* __or = "or";
+const char* __xor = "xor";
+const char* __not = "not";
+
 typedef struct Data{    // Переменные
     char* name;
     int value;
@@ -155,12 +162,13 @@ int init(Vector *names_and_values, char* str);  // Инициализация п
 int isvalid(char* name);  // Проверка на совпадение c or, and, xor, not
 int isrepit(Vector* vec_of_name ,char* name);  // Проверка на повторение имен
 int calc(Vector* names_and_values, char* str);  // Вычиление выражения
-int search_and(char* str, size_t i);
+int search_const_name(char* str, const char* const_str);
+/*int search_and(char* str, size_t i);
 int search_not(char* str, size_t i);
 int search_xor(char* str, size_t i);
-int search_or(char* str, size_t i);
+int search_or(char* str, size_t i);*/
 int search_true(char* str, size_t i);
-int search_false(char* str, size_t i);
+//int search_false(char* str, size_t i);
 int set_operator(Stack* operators, char op, Stack* operands); // Добавление операторов в стек
 int get_priority(char symbol);  // Приоритеты операций
 int calculate(Stack* operands, char op);  // Вычиление операндов в зависимости от оператора
@@ -294,7 +302,7 @@ int init(Vector* names_and_values, char* str){
 
     }
     else{
-        if(push_back(names_and_values, data) != 0){   // Добавление переменной с вектор
+        if(push_back(names_and_values, data) != 0){   // Добавление переменной в вектор
             free_data(data);
             free(str);
             return 1;
@@ -335,117 +343,95 @@ int calc(Vector* names_and_values, char* str){
         return 1;
     }
     size_t i = 0;
-    for(; i < strlen(str); i++){
-        if(search_and(str, i)){
-            i += 2;
+    size_t j = 0;
+    for(; i < strlen(str);){
+    
+        for(; str[i] && isspace(str[i]); i++){}
+        
+        j = i;
+        for(; str[j] &&
+          !isspace(str[j]) &&
+          str[j] != '(' &&
+          str[j] != ')';
+          j++){}
+          
+        char* temp = (char*)calloc((j - i + 1), sizeof(char));
+        if(temp == NULL){
+            free(str);
+            free_stack(operators);
+            free_stack(operands);
+            return 1;
+        }
+        
+        temp = memcpy(temp, str + i, j - i);
+        i = j;  
+          
+        if(search_const_name(temp, __and)){
             if(set_operator(operators, '&', operands) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(search_not(str, i)){
-            i += 2;
+        else if(search_const_name(temp, __not)){
             if(set_operator(operators, '~', operands) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(search_xor(str, i)){
-            i += 2;
+        else if(search_const_name(temp, __xor)){
             if(set_operator(operators, '^', operands) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(search_or(str, i)){
-            i++;
+        else if(search_const_name(temp, __or)){
             if(set_operator(operators, '|', operands) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(str[i] == '('){           // Поиск оператора (
-            if(set_operator(operators, '(', operands) != 0){
-                free(str);
-                free_stack(operators);
-                free_stack(operands);
-                return 1;
-            }
-        }
-        else if(str[i] == ')'){          // Поиск оператора )
-            while(*(char*)(top(operators)) != '('){          // Вычисляем содержимое скобок
-                if(calculate(operands, *(char*)(top(operators))) != 0){
-                    free(str);
-                    free_stack(operators);
-                    free_stack(operands);
-                    return 1;
-                }
-                pop(operators);
-            }
-            pop(operators);
-            if(operators->real_size != 0 && *(char*)(top(operators)) == '~'){  // Проверка на оператор not
-                int new_value = !(*(int*)top(operands) % 256);
-                pop(operands);
-                if(push(operands, &new_value, sizeof(int)) != 0){
-                    free(str);
-                    free_stack(operators);
-                    free_stack(operands);
-                    return 1;
-                }
-
-                pop(operators);
-            }
-        }
-        else if(search_true(str, i)){
-            i += 3;
+        else if(search_const_name(temp, __true)){
             int true_value = 1;
             if(operators->real_size != 0 && *(char*)(top(operators)) == '~'){
                 true_value = !true_value;
                 pop(operators);
             }
             if(push(operands, &true_value, sizeof(int)) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(search_false(str, i))
-        {
-            i += 4;
+        else if(search_const_name(temp, __false)){
             int false_value = 0;
             if(operators->real_size != 0 && *(char*)(top(operators)) == '~'){
                 false_value = !false_value;
                 pop(operators);
             }
             if(push(operands, &false_value, sizeof(int)) != 0){
+                free(temp);
                 free(str);
                 free_stack(operators);
                 free_stack(operands);
                 return 1;
             }
         }
-        else if(islower(str[i]) && (i == 0 || isspace(str[i - 1]) || ispunct(str[i - 1])))  // Поиск переменной
+        else if(strlen(temp) != 0)  // Поиск переменной
         {
-            size_t j = i;
-            for(; str[j] && !isspace(str[j + 1]) && !ispunct(str[j + 1]); j++){}  // Поиск конца имени
-            char* temp = (char*)calloc((j - i + 2), sizeof(char));
-            if(temp == NULL){
-                free(str);
-                free_stack(operators);
-                free_stack(operands);
-                return 1;
-            }
-            temp = memcpy(temp, str + i, j - i + 1);
-            i = j;
             if(get(names_and_values, temp) != NULL){
                 int new_value = get(names_and_values, temp)->value;
                 if(operators->real_size != 0 && *(char*)(top(operators)) == '~'){
@@ -467,8 +453,45 @@ int calc(Vector* names_and_values, char* str){
                 free_stack(operands);
                 return 1;
             }
-            free(temp);
         }
+        else if(str[i] == '('){           // Поиск оператора (
+            i++;
+            if(set_operator(operators, '(', operands) != 0){
+                free(temp);
+                free(str);
+                free_stack(operators);
+                free_stack(operands);
+                return 1;
+            }
+        }
+        else if(str[i] == ')'){          // Поиск оператора )
+            i++;
+            while(*(char*)(top(operators)) != '('){          // Вычисляем содержимое скобок
+                if(calculate(operands, *(char*)(top(operators))) != 0){
+                    free(temp);
+                    free(str);
+                    free_stack(operators);
+                    free_stack(operands);
+                    return 1;
+                }
+                pop(operators);
+            }
+            pop(operators);
+            if(operators->real_size != 0 && *(char*)(top(operators)) == '~'){  // Проверка на оператор not
+                int new_value = !(*(int*)top(operands) % 256);
+                pop(operands);
+                if(push(operands, &new_value, sizeof(int)) != 0){
+                    free(temp);
+                    free(str);
+                    free_stack(operators);
+                    free_stack(operands);
+                    return 1;
+                }
+
+                pop(operators);
+            }
+        }
+        free(temp);
 
     }
 
@@ -494,22 +517,14 @@ int calc(Vector* names_and_values, char* str){
     return 0;
 }
 
-int search_and(char* str, size_t i){
-    return (i + 2 <= strlen(str) &&   // Поиск оператора and
-       str[i] == 'a' &&
-       (i == 0 ||
-        isspace(str[i - 1]) ||
-        str[i - 1] == ')' ||
-        str[i - 1] == '(') &&
-       str[i + 1] == 'n' &&
-       str[i + 2] == 'd' &&
-       (!str[i + 3] ||
-        isspace(str[i + 3]) ||
-        str[i + 3] == '(' ||
-        str[i + 3] == ')'));
+int search_const_name(char* str, const char* const_str){
+    if(strcmp(str, const_str) == 0){
+        return 1;
+    }
+    return 0;
 }
 
-int search_not(char* str, size_t i){
+/*int search_not(char* str, size_t i){
     return (i + 2 <= strlen(str) &&   // Поиск оператора not
             str[i] == 'n' &&
             (i == 0 ||
@@ -551,7 +566,7 @@ int search_or(char* str, size_t i){
              isspace(str[i + 2]) ||
              str[i + 2] == '(' ||
              str[i + 2] == ')'));
-}
+}*/
 
 int search_true(char* str, size_t i){
     return (i + 3 <= strlen(str) &&   // Поиск значения True
@@ -566,7 +581,7 @@ int search_true(char* str, size_t i){
              isspace(str[i + 4]) ||
              ispunct(str[i + 4])));
 }
-
+/*
 int search_false(char* str, size_t i){
     return (i + 4 <= strlen(str) &&   // Поиск значения False
             str[i] == 'F' &&
@@ -580,7 +595,7 @@ int search_false(char* str, size_t i){
             (!str[i + 5] ||
              isspace(str[i + 5]) ||
              ispunct(str[i + 5])));
-}
+}*/
 
 int set_operator(Stack* operators, char op, Stack* operands){
     if(op == '(' ||
